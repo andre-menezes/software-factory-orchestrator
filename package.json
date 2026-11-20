@@ -1,0 +1,30 @@
+{
+  "name": "software-factory-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-agent software engineering orchestrator: 14 specialized agents, a gated state machine and a CLI that drives a separate product repository.",
+  "type": "module",
+  "bin": {
+    "factory": "bin/factory"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "factory": "tsx src/cli.ts",
+    "validate": "tsx src/cli.ts validate",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "^15.1.0",
+    "tsx": "^4.23.15",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

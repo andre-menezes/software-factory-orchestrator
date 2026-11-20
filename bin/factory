@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Entry point of the orchestrator CLI. Runs the TypeScript sources directly via tsx.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ ! -x "$ROOT/node_modules/.bin/tsx" ]; then
+  echo "Dependências não instaladas. Rode: (cd \"$ROOT\" && npm install)" >&2
+  exit 1
+fi
+exec "$ROOT/node_modules/.bin/tsx" "$ROOT/src/cli.ts" "$@"

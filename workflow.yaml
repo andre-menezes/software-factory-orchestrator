@@ -1,0 +1,173 @@
+# Máquina de estados da fábrica de software.
+# Fonte única de verdade para fases, etapas, agentes, leituras permitidas e gates.
+# Validado por `./bin/factory validate`. O CLI recusa qualquer transição fora daqui.
+#
+# Ciclo de toda etapa com gate:
+#   PENDENTE -> EM_ANDAMENTO -> AGUARDANDO_APROVACAO -> APROVADO
+#   AJUSTAR devolve para EM_ANDAMENTO (nova revisão). PERGUNTAR não muda o estado.
+#
+# `reads` lista os únicos artefatos anteriores que o agente pode ler.
+# `sync` é a passada do Technical Writer ao fim da fase (sem gate próprio).
+
+version: 1
+
+phases:
+  - id: F1
+    type: steps
+    name: Descoberta
+    steps:
+      - id: S01
+        name: Triagem e diagnóstico
+        agent: solutions-consultant
+        reads: []
+        output: docs/01-diagnostico.md
+        template: 01-diagnostico.md
+      - id: S02
+        name: Visão de produto e escopo do MVP
+        agent: product-manager
+        reads: [docs/01-diagnostico.md]
+        output: docs/02-visao-produto.md
+        template: 02-visao-produto.md
+      - id: S03
+        name: Métricas e instrumentação
+        agent: data-analyst
+        reads: [docs/01-diagnostico.md, docs/02-visao-produto.md]
+        output: docs/03-metricas.md
+        template: 03-metricas.md
+      - id: S04
+        name: Requisitos
+        agent: requirements-analyst
+        reads: [docs/01-diagnostico.md, docs/02-visao-produto.md, docs/03-metricas.md]
+        output: docs/04-requisitos.md
+        template: 04-requisitos.md
+    sync:
+      milestone: Descoberta
+      scope:
+        - Atualizar docs/INDEX.md com os artefatos 01 a 04 e seus status
+        - Atualizar README.md (problema, público, escopo do MVP, estado atual)
+        - Registrar em docs/adr/ as decisões de produto e escopo marcadas no estado
+
+  - id: F2
+    type: steps
+    name: Design e Arquitetura
+    steps:
+      - id: S05
+        name: Experiência do usuário (UX)
+        agent: ux-designer
+        reads: [docs/02-visao-produto.md, docs/04-requisitos.md]
+        output: docs/05-ux.md
+        template: 05-ux.md
+      - id: S06
+        name: Interface (UI)
+        agent: ui-designer
+        reads: [docs/02-visao-produto.md, docs/05-ux.md]
+        output: docs/06-ui.md
+        template: 06-ui.md
+      - id: S07
+        name: Arquitetura técnica
+        agent: tech-architect
+        reads: [docs/02-visao-produto.md, docs/03-metricas.md, docs/04-requisitos.md, docs/05-ux.md]
+        output: docs/07-arquitetura.md
+        template: 07-arquitetura.md
+      - id: S08
+        name: Segurança (threat model e requisitos)
+        agent: cybersecurity-engineer
+        reads: [docs/04-requisitos.md, docs/07-arquitetura.md]
+        output: docs/08-seguranca.md
+        template: 08-seguranca.md
+    sync:
+      milestone: Arquitetura e Segurança
+      scope:
+        - Atualizar docs/INDEX.md com os artefatos 05 a 08
+        - Atualizar README.md (stack, visão de arquitetura, postura de segurança)
+        - Registrar um ADR para cada decisão de stack, arquitetura, dados e autenticação
+
+  - id: F3
+    type: steps
+    name: Planejamento
+    steps:
+      - id: S09
+        name: Backlog de User Stories
+        agent: product-owner
+        reads: [docs/02-visao-produto.md, docs/04-requisitos.md, docs/05-ux.md, docs/06-ui.md, docs/07-arquitetura.md, docs/08-seguranca.md]
+        output: docs/09-backlog.md
+        template: 09-backlog.md
+        requiresStories: true
+      - id: S10
+        name: Plano de testes e homologação
+        agent: qa-delivery-manager
+        reads: [docs/04-requisitos.md, docs/08-seguranca.md, docs/09-backlog.md]
+        output: docs/10-plano-testes-uat.md
+        template: 10-plano-testes-uat.md
+      - id: S11
+        name: Infraestrutura, ambientes e CI base
+        agent: devops-engineer
+        reads: [docs/07-arquitetura.md, docs/08-seguranca.md]
+        output: docs/11-infra-deploy.md
+        template: 11-infra-deploy.md
+        commitType: chore
+    sync:
+      milestone: Planejamento
+      scope:
+        - Atualizar docs/INDEX.md com os artefatos 09 a 11 e a lista de stories
+        - Criar docs/guides/setup.md (guia de setup e desenvolvimento) a partir do que o DevOps configurou
+        - Atualizar README.md (como rodar localmente, roadmap de stories)
+
+  - id: F4
+    type: story_loop
+    name: Construção
+    # Uma User Story por vez, em uma branch própria, com um gate ao final.
+    reads: [docs/09-backlog.md, docs/04-requisitos.md, docs/05-ux.md, docs/06-ui.md, docs/07-arquitetura.md, docs/08-seguranca.md, docs/10-plano-testes-uat.md, docs/11-infra-deploy.md]
+    stages:
+      - id: backend
+        name: Implementação de backend
+        agent: backend-developer
+      - id: frontend
+        name: Implementação de frontend
+        agent: frontend-developer
+      - id: security
+        name: Revisão de segurança da fatia
+        agent: cybersecurity-engineer
+        recheckOnAdjust: true
+      - id: qa
+        name: Verificação dos critérios de aceite
+        agent: qa-delivery-manager
+        recheckOnAdjust: true
+    sync:
+      milestone: Entrega de Funcionalidade
+      scope:
+        - Atualizar docs/api/contracts.md com os endpoints criados ou alterados na story
+        - Atualizar docs/guides/setup.md se comandos, variáveis ou dependências mudaram
+        - Atualizar docs/INDEX.md e o status de funcionalidades no README.md
+        - Registrar ADR para qualquer decisão técnica nova tomada durante a story
+
+  - id: F5
+    type: steps
+    name: Release
+    steps:
+      - id: S12
+        name: Revisão de segurança pré-deploy
+        agent: cybersecurity-engineer
+        reads: [docs/08-seguranca.md, docs/09-backlog.md, docs/11-infra-deploy.md]
+        output: docs/12-relatorio-entrega.md
+        template: 12-relatorio-entrega.md
+      - id: S13
+        name: Homologação (UAT)
+        agent: qa-delivery-manager
+        reads: [docs/09-backlog.md, docs/10-plano-testes-uat.md, docs/12-relatorio-entrega.md]
+        output: docs/12-relatorio-entrega.md
+        template: 12-relatorio-entrega.md
+      - id: S14
+        name: Deploy em staging e produção
+        agent: devops-engineer
+        reads: [docs/11-infra-deploy.md, docs/12-relatorio-entrega.md]
+        output: docs/12-relatorio-entrega.md
+        template: 12-relatorio-entrega.md
+        commitType: chore
+    sync:
+      milestone: Deploy
+      scope:
+        - Criar docs/guides/runbook.md (operação, deploy, rollback, incidentes)
+        - Criar docs/guides/manual-usuario.md (manual funcional para o cliente)
+        - Revisão final de README.md, docs/INDEX.md, docs/api/contracts.md e ADRs
+        - Conferir que toda etapa e toda story têm artefato e link no índice

@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./bin/factory:*)",
+      "Bash(npm test)",
+      "Bash(npm run typecheck)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Edit(**/PROJECT_STATE.json)",
+      "Write(**/PROJECT_STATE.json)"
+    ],
+    "additionalDirectories": [
+      "../"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ]
+  }
+}

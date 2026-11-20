@@ -1,0 +1,28 @@
+# Padrões que os agentes assumem quando o cliente não especifica outra coisa.
+# São copiados para o PROJECT_STATE.json no `factory init`. O Tech Architect e o
+# DevOps podem propor desvios, mas precisam justificar e registrar como decisão.
+
+language:
+  documentation: pt-BR        # artefatos, resumos executivos, manual do usuário
+  code: en                    # identificadores, comentários, mensagens de commit
+
+stack:
+  frontend: Next.js (React, TypeScript, App Router)
+  backend: FastAPI (Python)
+  orm: SQLAlchemy 2.x
+  migrations: Alembic
+  database: PostgreSQL
+  backendTests: pytest
+  frontendTests: Vitest + Testing Library; Playwright para fluxos críticos
+
+infra:
+  local: Docker Compose
+  ci: GitHub Actions
+  hosting: PaaS com Postgres gerenciado (ex. Railway, Fly.io, Vercel para o frontend)
+  environments: [dev, staging, prod]
+
+git:
+  mainBranch: main
+  storyBranchPattern: story/<US-id>-<slug>
+  commits: Conventional Commits, em inglês
+  push: nunca automático; somente a pedido do cliente
